@@ -1,0 +1,46 @@
+/* Additional styles for drag and drop functionality */
+.upload-area.drag-over {
+  border: 2px dashed var(--secondary-color);
+  background: rgba(185, 214, 242, 0.2);
+}
+
+.upload-prompt i {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.drag-active .upload-prompt h3 {
+  color: var(--secondary-color);
+}
+
+/* Improved notification for drag events */
+.drag-notification {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--secondary-gradient);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 109, 170, 0.3);
+  z-index: 100;
+}
+
+.drag-notification.show {
+  opacity: 1;
+}
