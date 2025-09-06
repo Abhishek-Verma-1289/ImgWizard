@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, send_from_directory
 from flask_cors import CORS
 from rembg import remove
 from PIL import Image, ImageEnhance
@@ -7,8 +7,16 @@ import cv2
 import numpy as np
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 CORS(app)
+
+@app.route('/')
+def root():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:path>')
+def send_static(path):
+    return send_from_directory('.', path)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
