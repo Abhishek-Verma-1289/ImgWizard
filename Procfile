@@ -1,1 +1,1 @@
-web: gunicorn app:app --bind 0.0.0.0:$PORT --log-file -
+web: gunicorn --bind=0.0.0.0:$PORT --workers=4 --threads=4 --worker-class=gthread app:app
