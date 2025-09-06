@@ -1,9 +1,20 @@
 // Main functionality for image processing
 document.addEventListener('DOMContentLoaded', function() {
     // Get the file input and image preview elements
-    const fileInput = document.querySelector('input[type="file"]');
+    const fileInput = document.getElementById('fileInput');
     const imagePreview = document.getElementById('imagePreview');
-    const uploadArea = document.querySelector('.upload-area');
+    const uploadArea = document.getElementById('uploadArea');
+    const processingSpinner = document.getElementById('processingSpinner');
+
+    // Show processing spinner
+    function showProcessing() {
+        processingSpinner.style.display = 'flex';
+    }
+
+    // Hide processing spinner
+    function hideProcessing() {
+        processingSpinner.style.display = 'none';
+    }
 
     // Function to remove background
     window.removeBackground = async function() {
