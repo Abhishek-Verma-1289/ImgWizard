@@ -1,15 +1,45 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
-from rembg import remove
+from rembg import remove, new_session
 from PIL import Image, ImageEnhance
 import io
 import cv2
 import numpy as np
-
 import os
+import functools
 
 app = Flask(__name__)
 CORS(app)
+
+# Initialize rembg session once
+session = new_session()
+
+# Cache for processed images
+cache = {}
+
+def optimize_image_size(image_data, max_size=1500):
+    """Optimize image size before processing"""
+    image = Image.open(io.BytesIO(image_data))
+    
+    # Calculate new size while maintaining aspect ratio
+    ratio = min(max_size / max(image.size[0], image.size[1]), 1.0)
+    if ratio < 1.0:
+        new_size = tuple(int(dim * ratio) for dim in image.size)
+        image = image.resize(new_size, Image.Resampling.LANCZOS)
+        
+        # Convert back to bytes
+        img_byte_arr = io.BytesIO()
+        image.save(img_byte_arr, format=image.format or 'PNG')
+        return img_byte_arr.getvalue()
+    
+    return image_data
+
+@functools.lru_cache(maxsize=20)
+def remove_background(image_hash):
+    """Cached background removal"""
+    if image_hash in cache:
+        return cache[image_hash]
+    return None
 
 @app.route('/')
 def home():
@@ -90,13 +120,30 @@ def remove_bg():
         file = request.files['image']
         app.logger.info(f'Processing image: {file.filename}')
         
+        # Read and optimize input image
         input_data = file.read()
-        app.logger.info('Image read successfully')
+        optimized_data = optimize_image_size(input_data)
+        app.logger.info('Image optimized successfully')
         
-        output_data = remove(input_data)
+        # Generate a hash of the image data for caching
+        image_hash = hash(optimized_data)
+        
+        # Check cache first
+        cached_result = remove_background(image_hash)
+        if cached_result:
+            app.logger.info('Using cached result')
+            return send_file(io.BytesIO(cached_result), mimetype='image/png', 
+                           as_attachment=False, download_name='no-bg.png')
+        
+        # Process the image with the global session
+        output_data = remove(optimized_data, session=session)
         app.logger.info('Background removal completed')
         
-        return send_file(io.BytesIO(output_data), mimetype='image/png', as_attachment=False, download_name='no-bg.png')
+        # Cache the result
+        cache[image_hash] = output_data
+        
+        return send_file(io.BytesIO(output_data), mimetype='image/png', 
+                        as_attachment=False, download_name='no-bg.png')
     except Exception as e:
         app.logger.error(f'Error in background removal: {str(e)}')
         return f'Error processing image: {str(e)}', 500
