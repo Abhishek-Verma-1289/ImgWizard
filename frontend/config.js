@@ -1,7 +1,7 @@
 // Configuration for the application
 const config = {
     // API endpoints
-    apiBaseUrl: 'http://localhost:5000',
+    apiBaseUrl: 'https://your-backend.onrender.com',
     endpoints: {
         removeBg: '/remove-bg',
         enhance: '/enhance-bg-removed',
