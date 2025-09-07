@@ -922,81 +922,47 @@
         const bgFormData = new FormData();
         bgFormData.append('image', imageFile);
         
-        fetch('http://localhost:5000/remove-bg', {
-          method: 'POST',
-          body: bgFormData
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.blob();
-        })
-        .then(blob => {
-          // Store the processed image
-          currentBgRemovedBlob = blob;
-          
-          // Create object URL for display and download
-          const objectURL = URL.createObjectURL(blob);
-          resultImage.src = objectURL;
-          downloadLink.href = objectURL;
-          downloadLink.style.display = 'block';
-          
-          // Update UI
-          loader.style.display = 'none';
-          document.getElementById('resetOriginalTool').style.display = 'flex';
-          
-          showNotification('Background removed successfully!', 'success');
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          loader.style.display = 'none';
-          showNotification('Failed to remove background. Please try again.', 'error');
-          
-          // Reset to original image on error
-          if (originalImageBlob) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-              resultImage.src = e.target.result;
-            };
-            reader.readAsDataURL(originalImageBlob);
-          }
-        });
-
-        fetch('http://localhost:5000/remove-bg', {
-          method: 'POST',
-          body: bgFormData
-        })
-        .then(response => {
-          console.log('Response status:', response.status);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.blob();
-        })
-        .then(blob => {
-          console.log('Background removal successful, blob size:', blob.size);
-          const url = URL.createObjectURL(blob);
-          loader.style.display = 'none';
-          resultImage.src = url;
-          downloadLink.href = url;
-          downloadLink.style.display = 'block';
-          
-          // Tools are already visible, just store the data
-          // Store the background removed image blob
-          currentBgRemovedBlob = blob;
-          currentProcessedBlob = blob;
-          isEnhanced = false;
-          hasColorBackground = false;
-          
-          // Show success notification
-          showNotification('Background removed successfully!', 'success');
-        })
-        .catch(error => {
-          console.error('Background removal failed:', error);
-          loader.style.display = 'none';
-          showNotification('Failed to remove background: ' + error.message, 'error');
-        });
+        // Using API helper function for background removal
+        window.api.removeBg(bgFormData)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.blob();
+          })
+          .then(blob => {
+            console.log('Background removal successful, blob size:', blob.size);
+            const url = URL.createObjectURL(blob);
+            
+            // Store the processed image
+            currentBgRemovedBlob = blob;
+            currentProcessedBlob = blob;
+            isEnhanced = false;
+            hasColorBackground = false;
+            
+            // Update UI
+            loader.style.display = 'none';
+            resultImage.src = url;
+            downloadLink.href = url;
+            downloadLink.style.display = 'block';
+            document.getElementById('resetOriginalTool').style.display = 'flex';
+            
+            showNotification('Background removed successfully!', 'success');
+          })
+          .catch(error => {
+            console.error('Background removal failed:', error);
+            loader.style.display = 'none';
+            showNotification('Failed to remove background: ' + error.message, 'error');
+            
+            // Reset to original image on error
+            if (originalImageBlob) {
+              const reader = new FileReader();
+              reader.onload = function(e) {
+                resultImage.src = e.target.result;
+              };
+              reader.readAsDataURL(originalImageBlob);
+            }
+          });
       }
     }
 
@@ -1020,29 +986,27 @@
       formData.append('image', currentProcessedBlob, 'processed-image.png');
       formData.append('color', selectedColor);
 
-      fetch('http://localhost:5000/add-color-background', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        loader.style.display = 'none';
-        resultImage.src = url;
-        downloadLink.href = url;
-        downloadLink.style.display = 'block';
-        
-        // Store the colored background version
-        currentColoredBlob = blob;
-        hasColorBackground = true;
-        
-        // Show success notification
-        showNotification('Background color applied!', 'success');
-      })
-      .catch(() => {
-        loader.style.display = 'none';
-        showNotification('Failed to apply background color', 'error');
-      });
+      // Using API helper function
+      window.api.addColorBg(formData)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          loader.style.display = 'none';
+          resultImage.src = url;
+          downloadLink.href = url;
+          downloadLink.style.display = 'block';
+          
+          // Store the colored background version
+          currentColoredBlob = blob;
+          hasColorBackground = true;
+          
+          // Show success notification
+          showNotification('Background color applied!', 'success');
+        })
+        .catch(() => {
+          loader.style.display = 'none';
+          showNotification('Failed to apply background color', 'error');
+        });
     }
 
     function enhanceBgRemovedImage() {
@@ -1066,26 +1030,14 @@
       const formData = new FormData();
       formData.append('image', imageToEnhance, 'image-to-enhance.png');
 
-      // Use different endpoint based on image type
-      const endpoint = currentBgRemovedBlob ? 'enhance-bg-removed' : 'enhance-only';
-      
-      fetch(`http://localhost:5000/${endpoint}`, {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => {
-        if (!response.ok) {
-          // If enhance-only endpoint doesn't exist, try enhance-bg-removed as fallback
-          if (endpoint === 'enhance-only') {
-            return fetch('http://localhost:5000/enhance-bg-removed', {
-              method: 'POST',
-              body: formData
-            });
+      // Use API helper function with background flag
+      window.api.enhance(formData, !!currentBgRemovedBlob)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response;
-      })
+          return response;
+        })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -1134,17 +1086,14 @@
       formData.append('image', enhancedBlob, 'enhanced-bg-removed.png');
       formData.append('color', selectedColor);
 
-      fetch('http://localhost:5000/add-color-background', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        loader.style.display = 'none';
-        resultImage.src = url;
-        downloadLink.href = url;
-        downloadLink.style.display = 'block';
+      window.api.addColorBg(formData)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          loader.style.display = 'none';
+          resultImage.src = url;
+          downloadLink.href = url;
+          downloadLink.style.display = 'block';
         
         // Show success notification
         showNotification('Color applied to enhanced image!', 'success');
@@ -1205,25 +1154,23 @@
       formData.append('image', currentBgRemovedBlob, 'bg-removed.png');
       formData.append('color', selectedColor);
 
-      fetch('http://localhost:5000/add-color-background', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        loader.style.display = 'none';
-        resultImage.src = url;
-        downloadLink.href = url;
-        downloadLink.style.display = 'block';
-        
-        // Update the current processed and colored blob
-        currentColoredBlob = blob;
-      })
-      .catch(() => {
-        loader.style.display = 'none';
-        alert("Something went wrong. Please try again.");
-      });
+      // Using API helper function for adding color background
+      window.api.addColorBg(formData)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          loader.style.display = 'none';
+          resultImage.src = url;
+          downloadLink.href = url;
+          downloadLink.style.display = 'block';
+          
+          // Update the current processed and colored blob
+          currentColoredBlob = blob;
+        })
+        .catch(() => {
+          loader.style.display = 'none';
+          alert("Something went wrong. Please try again.");
+        });
     }
 
     function applyColorToEnhanced(enhancedBlob) {
@@ -1239,25 +1186,22 @@
       formData.append('image', enhancedBlob, 'enhanced-bg-removed.png');
       formData.append('color', selectedColor);
 
-      fetch('http://localhost:5000/add-color-background', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        loader.style.display = 'none';
-        resultImage.src = url;
-        downloadLink.href = url;
-        downloadLink.style.display = 'block';
-        
-        // Store the colored enhanced image
-        currentColoredBlob = blob;
-      })
-      .catch(() => {
-        loader.style.display = 'none';
-        alert("Something went wrong. Please try again.");
-      });
+      window.api.addColorBg(formData)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          loader.style.display = 'none';
+          resultImage.src = url;
+          downloadLink.href = url;
+          downloadLink.style.display = 'block';
+          
+          // Store the colored enhanced image
+          currentColoredBlob = blob;
+        })
+        .catch(() => {
+          loader.style.display = 'none';
+          alert("Something went wrong. Please try again.");
+        });
     }
 
     // Toggle enhancement function
