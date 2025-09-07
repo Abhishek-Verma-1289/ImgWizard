@@ -1,7 +1,7 @@
 // Configuration for the application
 const config = {
     // API endpoints
-    apiBaseUrl: 'https://your-backend.onrender.com',
+    apiBaseUrl: 'https://imgwizard-backend.onrender.com',
     endpoints: {
         removeBg: '/remove-bg',
         enhance: '/enhance-bg-removed',
