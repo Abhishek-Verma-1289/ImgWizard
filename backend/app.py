@@ -43,7 +43,32 @@ def remove_background(image_hash):
 
 @app.route('/')
 def home():
-    return 'ImgWizard API is running! Available endpoints: /remove-bg, /enhance-bg-removed'
+    """Health check and API information endpoint"""
+    return jsonify({
+        'status': 'running',
+        'version': '1.0.0',
+        'endpoints': {
+            'remove_bg': '/remove-bg',
+            'enhance': '/enhance-bg-removed',
+            'enhance_original': '/enhance-only',
+            'add_color_bg': '/add-color-background'
+        }
+    })
+
+@app.errorhandler(500)
+def server_error(e):
+    app.logger.error(f'Server error: {str(e)}')
+    return jsonify({
+        'error': 'Internal server error',
+        'message': str(e)
+    }), 500
+
+@app.errorhandler(400)
+def bad_request(e):
+    return jsonify({
+        'error': 'Bad request',
+        'message': str(e)
+    }), 400
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
