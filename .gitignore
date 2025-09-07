@@ -1,0 +1,25 @@
+# OS files
+Thumbs.db
+.DS_Store
+
+# Editor directories
+.vscode/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Environment files
+.env
+
+# Build output
+dist/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp

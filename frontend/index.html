@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Image Tools | Background Remover & Enhancer</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="drag-drop.css">
+  <link rel="stylesheet" href="notifications.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="config.js"></script>
+  <script src="script.js" defer></script>
+  <script src="blur.js" defer></script>
+</head>
+<body>
+  <!-- Header Section -->
+  <header>
+    <div class="logo">
+      <i class="fas fa-camera-retro"></i>
+      <span>ImgWizard</span>
+    </div>
+    <nav class="main-nav">
+      <ul>
+        <li class="active"><a href="#"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="#"><i class="fas fa-tools"></i> Tools</a></li>
+        <li><a href="#"><i class="fas fa-info-circle"></i> About</a></li>
+      </ul>
+    </nav>
+    <div class="auth-buttons">
+      <button class="login-btn" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+      <button class="signup-btn" id="signupBtn"><i class="fas fa-user-plus"></i> Sign Up</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- <h1 class="page-title">Image Editing Tools</h1> -->
+    
+    <!-- Main Content Area -->
+    <div class="content-wrapper">
+      <!-- Left Sidebar Tools -->
+      <aside class="tools-sidebar">
+        <h3><i class="fas fa-sliders-h"></i> Tools</h3>
+        
+        <ul>
+          <li class="tool-item" id="bgRemoveTool" onclick="removeBackground()">
+            <i class="fas fa-cut"></i> BG Remove
+          </li>
+          <li class="tool-item" id="enhanceTool" onclick="toggleEnhancement()">
+            <i class="fas fa-magic"></i> <span id="enhanceText">Enhance Photo</span>
+          </li>
+          <li class="tool-item" id="colorBgTool" onclick="showColorPicker()">
+            <i class="fas fa-fill-drip"></i> Change BG Color
+          </li>
+          <!-- Color Picker Section (initially hidden) - appears right under Change BG Color button -->
+          <li id="colorPickerSection" style="display:none; margin-top: 5px; margin-bottom: 10px;">
+            <div class="color-picker-wrapper">
+              <label for="bgColorPicker">Choose Background Color:</label>
+              <div class="circular-color-picker">
+                <input type="color" id="bgColorPicker" value="#ffffff">
+                <div class="color-preview" id="colorPreview"></div>
+              </div>
+              <button onclick="addColorBackground()" class="sidebar-btn apply-color-btn">
+                <i class="fas fa-check"></i> Apply Color
+              </button>
+            </div>
+          </li>
+          <li class="tool-item" onclick="toggleBlurControls()">
+            <i class="fas fa-tint"></i> Blur
+          </li>
+          <!-- Blur Controls Section (initially hidden) -->
+          <li id="blurControlsSection" style="display:none; margin-top: 5px; margin-bottom: 10px;">
+            <div class="blur-controls-wrapper">
+              <label for="blurRange">Blur Intensity:</label>
+              <input type="range" id="blurRange" min="1" max="20" value="5" class="blur-slider">
+              <div class="blur-value" id="blurValue">5px</div>
+              <button onclick="applyBlurEffect()" class="sidebar-btn apply-blur-btn">
+                <i class="fas fa-check"></i> Apply Blur
+              </button>
+            </div>
+          </li>
+          <li class="tool-item" id="cropTool" onclick="toggleCropToolbar()">
+            <i class="fas fa-crop"></i> Crop
+          </li>
+          <!-- Crop Controls Section (inline, appears below Crop button like Blur/Color) -->
+          <li id="cropControlsSection" style="display:none; margin-top: 5px; margin-bottom: 10px;">
+            <div class="crop-controls-wrapper">
+              <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--primary-color);">Templates:</label>
+              <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:8px;">
+                <button class="crop-template-btn" onclick="setCropTemplate('square')" title="Square">
+                  <div class="crop-preview" style="width:32px;height:32px;border:2px solid var(--secondary-color);"></div>
+                  <small class="template-label">Square</small>
+                </button>
+                <button class="crop-template-btn" onclick="setCropTemplate('mobile')" title="19:6">
+                  <div class="crop-preview" style="width:24px;height:40px;border:2px solid var(--secondary-color);"></div>
+                  <small class="template-label">19:6</small>
+                </button>
+                <button class="crop-template-btn" onclick="setCropTemplate('passport')" title="Passport">
+                  <div class="crop-preview" style="width:32px;height:40px;border:2px solid var(--secondary-color);"></div>
+                  <small class="template-label">Passport</small>
+                </button>
+                <button class="crop-template-btn" onclick="setCropTemplate('freeform')" title="Freeform">
+                  <div class="crop-preview" style="width:32px;height:32px;border:2px dashed var(--secondary-color);"></div>
+                  <small class="template-label">Freeform</small>
+                </button>
+              </div>
+              <button onclick="applyCrop()" class="sidebar-btn apply-crop-btn" style="width:100%; margin-bottom:8px;"><i class="fas fa-check"></i> Apply Crop</button>
+              <button onclick="cancelCrop()" class="sidebar-btn cancel-crop-btn" style="width:100%;"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+          </li>
+          <li class="tool-item" id="resetOriginalTool" onclick="resetToOriginal()" style="display: none;">
+            <i class="fas fa-history"></i> Reset to Original
+          </li>
+        </ul>
+        
+        </ul>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <div class="upload-area" id="upload-area">
+          <div class="upload-prompt" id="uploadPrompt" 
+               ondrop="dropHandler(event)" 
+               ondragover="dragOverHandler(event)"
+               ondragleave="dragLeaveHandler(event)">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <button class="upload-btn" id="uploadButton" onclick="triggerFileInput()">
+              Upload Image
+            </button>
+            <p>or drag and drop</p>
+          </div>
+          
+          <div class="image-preview">
+            <img id="resultImage" src="" alt="">
+            <div id="loader" style="display:none;">
+              <div class="spinner"></div>
+              <p>Processing...</p>
+            </div>
+          </div>
+          
+          <!-- Coming Soon Message -->
+          <div id="comingSoonMessage" class="coming-soon-message" style="display:none;">
+            <i class="fas fa-tools"></i>
+            <h3>Coming Soon</h3>
+            <p>This feature is currently under development.</p>
+          </div>
+        </div>
+        
+        <!-- Hidden file input (moved outside upload area) -->
+        <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(this.files[0])">
+        <!-- Removing the floating crop toolbar -->
+      </main>
+
+      <!-- Right Sidebar for Download -->
+      <aside class="download-sidebar">
+        <h3><i class="fas fa-download"></i> Download</h3>
+        <div class="sidebar-section">
+          <a id="downloadLink" class="sidebar-btn download-btn" href="#" download="processed-image.png" style="display:none;" onclick="showNotification('Image downloaded!', 'success')">
+            <i class="fas fa-file-download"></i> Download Image
+          </a>
+          <p class="download-info" style="margin-top: 15px; text-align: center; color: var(--light-text); font-size: 0.9rem;">Click to save your processed image</p>
+        </div>
+        <button id="uploadNewImageBtn" class="sidebar-btn upload-new-btn" style="display:none;" onclick="uploadNewImage()">
+          <i class="fas fa-upload"></i> Upload New Image
+        </button>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-logo">
+        <i class="fas fa-camera-retro"></i>
+        <span>ImgWizard</span>
+      </div>
+      <div class="footer-links">
+        <h4>About Us</h4>
+        <ul>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Our Team</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div class="footer-social">
+        <h4>Connect With Us</h4>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-facebook"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+          <a href="#"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 ImgWizard. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Hidden placeholder for enhancer section (to maintain functionality) -->
+  <div style="display:none;" id="enhance-box"></div>
+
+  <script>
+    // State variables to track processing
+    let currentBgRemovedBlob = null; // Store the bg removed image blob
+    let currentProcessedBlob = null; // Store the currently processed image (enhanced or original)
+    let currentColoredBlob = null; // Store the colored background version
+    let originalImageBlob = null; // Store the original uploaded image
+    let isEnhanced = false; // Track if image is currently enhanced
+    let hasColorBackground = false; // Track if color background has been applied
+    let isImageUploaded = false; // Track if any image has been uploaded
+    
+    // Show notification to user
+    function showNotification(message, type = 'info') {
+      // Remove any existing notifications
+      const existingNotification = document.querySelector('.notification');
+      if (existingNotification) {
+        existingNotification.remove();
+      }
+      
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      
+      // Add appropriate icon based on notification type
+      let icon = 'info-circle';
+      if (type === 'success') icon = 'check-circle';
+      if (type === 'error') icon = 'exclamation-triangle';
+      
+      notification.innerHTML = `
+        <i class="fas fa-${icon}"></i>
+        <span>${message}</span>
+      `;
+      
+      // Add to document
+      document.body.appendChild(notification);
+      
+      // Show notification with animation
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          notification.remove();
+        }, 300);
+      }, 3000);
+    }
+    
+    // Helper function to highlight active tool
+    function highlightTool(toolId) {
+      // Remove active class from all tool items
+      document.querySelectorAll('.tool-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Add active class to the selected tool item
+      if (toolId) {
+        const tool = document.getElementById(toolId);
+        if (tool) tool.classList.add('active');
+      }
+    }
+    
+    // Show coming soon message for features under development
+    function showComingSoon(feature) {
+      highlightTool(null);
+      hideColorPicker(); // Hide color picker when using other tools
+      document.getElementById('comingSoonMessage').style.display = 'flex';
+      setTimeout(() => {
+        document.getElementById('comingSoonMessage').style.display = 'none';
+      }, 2000);
+    }
+
+    // Store original image data for blur operations
+    let originalImageData = null;
+    let blurDebounceTimer = null;
+
+    // Drag and drop handlers
+    function dragOverHandler(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById('uploadPrompt').classList.add('drag-over');
+    }
+
+    function dragLeaveHandler(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById('uploadPrompt').classList.remove('drag-over');
+    }
+
+    function dropHandler(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      document.getElementById('uploadPrompt').classList.remove('drag-over');
+      
+      const dt = event.dataTransfer;
+      const files = dt.files;
+
+      if (files.length > 0) {
+        handleImageUpload(files[0]);
+      }
+    }
+
+    // --- Crop Tool Logic ---
+    let cropActive = false;
+    let cropTemplate = 'freeform';
+    let cropRect = null;
+    let cropDragging = false;
+    let cropResizing = false;
+    let cropResizeCorner = null;
+    let cropStartX = 0;
+    let cropStartY = 0;
+    let cropImageNaturalWidth = 0;
+    let cropImageNaturalHeight = 0;
+
+    function toggleCropToolbar() {
+      cropActive = !cropActive;
+      const cropSection = document.getElementById('cropControlsSection');
+      const image = document.getElementById('resultImage');
+
+      if (cropActive) {
+        // Show inline controls like blur/color
+        cropSection.style.display = 'block';
+        highlightTool('cropTool');
+
+        // Only proceed if there's an image
+        if (!image.src) {
+          // No image: hide the section and warn
+          cropSection.style.display = 'none';
+          cropActive = false;
+          highlightTool(null);
+          showNotification('Please upload an image first', 'warning');
+          return;
+        }
+
+        // Setup crop overlay
+        showCropOverlay();
+      } else {
+        // Hide inline controls
+        cropSection.style.display = 'none';
+        highlightTool(null);
+        hideCropOverlay();
+      }
+    }
+
+    function setCropTemplate(template) {
+      cropTemplate = template;
+      showCropOverlay(template);
+    }
+
+    function showCropOverlay(template = cropTemplate) {
+      const image = document.getElementById('resultImage');
+      if (!image.src) {
+        showNotification('Please upload an image first', 'error');
+        return;
+      }
+      removeCropOverlay();
+      const imgRect = image.getBoundingClientRect();
+      cropImageNaturalWidth = image.naturalWidth;
+      cropImageNaturalHeight = image.naturalHeight;
+      let w = 0, h = 0;
+      if (template === 'square') {
+        w = h = Math.min(imgRect.width, imgRect.height) * 0.6;
+      } else if (template === 'mobile') {
+        w = imgRect.width * 0.5;
+        h = w * 1.66;
+      } else if (template === 'passport') {
+        // Passport size: 35mm x 45mm -> aspect height = width * (45/35)
+        w = imgRect.width * 0.6;
+        h = w * (45/35);
+      } else {
+        w = imgRect.width * 0.7;
+        h = imgRect.height * 0.7;
+      }
+  const left = imgRect.left + (imgRect.width - w) / 2;
+  const top = imgRect.top + (imgRect.height - h) / 2;
+
+  // Make overlay positioned relative to the image container so it follows image when scrolling
+  const container = image.parentElement; // .image-preview
+  const containerRect = container.getBoundingClientRect();
+
+  // cropRect stores offsets relative to the image top-left (inside image bbox)
+  const relLeft = left - imgRect.left;
+  const relTop = top - imgRect.top;
+  cropRect = { left: relLeft, top: relTop, width: w, height: h };
+
+  const overlay = document.createElement('div');
+  overlay.id = 'cropOverlay';
+  overlay.style.position = 'absolute';
+  // place overlay inside the container relative to container's top-left
+  overlay.style.left = (imgRect.left - containerRect.left + relLeft) + 'px';
+  overlay.style.top = (imgRect.top - containerRect.top + relTop) + 'px';
+      overlay.style.width = w + 'px';
+      overlay.style.height = h + 'px';
+      overlay.style.border = '2px solid var(--secondary-color)';
+      overlay.style.background = 'rgba(185, 214, 242, 0.1)'; // Using accent color with low opacity
+  overlay.style.zIndex = '1';
+      overlay.style.cursor = 'move';
+      overlay.style.boxSizing = 'border-box';
+      overlay.style.borderRadius = '8px';
+      overlay.style.pointerEvents = 'auto';
+      ['nw','ne','sw','se'].forEach(corner => {
+        const handle = document.createElement('div');
+        handle.className = 'crop-corner';
+        handle.dataset.corner = corner;
+        handle.style.position = 'absolute';
+        handle.style.width = '14px';
+        handle.style.height = '14px';
+        handle.style.borderRadius = '50%';
+        handle.style.zIndex = '101';
+        if (corner === 'nw') {
+          handle.style.left = '-7px'; handle.style.top = '-7px';
+        } else if (corner === 'ne') {
+          handle.style.right = '-7px'; handle.style.top = '-7px';
+        } else if (corner === 'sw') {
+          handle.style.left = '-7px'; handle.style.bottom = '-7px';
+        } else if (corner === 'se') {
+          handle.style.right = '-7px'; handle.style.bottom = '-7px';
+        }
+        overlay.appendChild(handle);
+      });
+  // ensure container is positioned to host absolute overlay
+  if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
+  container.appendChild(overlay);
+      overlay.addEventListener('mousedown', cropMouseDown);
+      document.addEventListener('mousemove', cropMouseMove);
+      document.addEventListener('mouseup', cropMouseUp);
+      Array.from(overlay.getElementsByClassName('crop-corner')).forEach(handle => {
+        handle.addEventListener('mousedown', cropResizeDown);
+      });
+    }
+
+    function removeCropOverlay() {
+      const overlay = document.getElementById('cropOverlay');
+      if (overlay) overlay.remove();
+      document.removeEventListener('mousemove', cropMouseMove);
+      document.removeEventListener('mouseup', cropMouseUp);
+    }
+
+    function hideCropOverlay() {
+      removeCropOverlay();
+      cropRect = null;
+    }
+
+    function cropMouseDown(e) {
+      if (e.target.classList.contains('crop-corner')) return;
+      cropDragging = true;
+      cropStartX = e.clientX;
+      cropStartY = e.clientY;
+    }
+
+    function cropMouseMove(e) {
+      const overlay = document.getElementById('cropOverlay');
+      if (!overlay || !cropRect) return;
+      if (cropDragging) {
+  const dx = e.clientX - cropStartX;
+  const dy = e.clientY - cropStartY;
+  cropRect.left += dx;
+  cropRect.top += dy;
+  // reposition overlay relative to container
+  const container = document.getElementById('resultImage').parentElement;
+  const imgRectNow = document.getElementById('resultImage').getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  overlay.style.left = (imgRectNow.left - containerRect.left + cropRect.left) + 'px';
+  overlay.style.top = (imgRectNow.top - containerRect.top + cropRect.top) + 'px';
+  cropStartX = e.clientX;
+  cropStartY = e.clientY;
+      } else if (cropResizing && cropResizeCorner) {
+        let { left, top, width, height } = cropRect;
+        if (cropResizeCorner === 'nw') {
+          left += e.movementX; top += e.movementY; width -= e.movementX; height -= e.movementY;
+        } else if (cropResizeCorner === 'ne') {
+          top += e.movementY; width += e.movementX; height -= e.movementY;
+        } else if (cropResizeCorner === 'sw') {
+          left += e.movementX; width -= e.movementX; height += e.movementY;
+        } else if (cropResizeCorner === 'se') {
+          width += e.movementX; height += e.movementY;
+        }
+        if (cropTemplate !== 'freeform') {
+          let aspect = 1;
+          if (cropTemplate === 'mobile') aspect = 1/1.66;
+          if (cropTemplate === 'passport') aspect = 35/45; // width/height for 35x45mm
+          if (cropTemplate === 'square') aspect = 1;
+          if (Math.abs(width/height - aspect) > 0.01) {
+            height = width / aspect;
+          }
+        }
+  cropRect = { left, top, width, height };
+  const container = document.getElementById('resultImage').parentElement;
+  const imgRectNow = document.getElementById('resultImage').getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  overlay.style.left = (imgRectNow.left - containerRect.left + left) + 'px';
+  overlay.style.top = (imgRectNow.top - containerRect.top + top) + 'px';
+  overlay.style.width = width + 'px';
+  overlay.style.height = height + 'px';
+      }
+    }
+
+    function cropMouseUp(e) {
+      cropDragging = false;
+      cropResizing = false;
+      cropResizeCorner = null;
+    }
+
+    function cropResizeDown(e) {
+      cropResizing = true;
+      cropResizeCorner = e.target.dataset.corner;
+      e.stopPropagation();
+    }
+
+    function applyCrop() {
+      if (!cropRect) return;
+      const image = document.getElementById('resultImage');
+  const imgRect = image.getBoundingClientRect();
+  const scaleX = cropImageNaturalWidth / imgRect.width;
+  const scaleY = cropImageNaturalHeight / imgRect.height;
+  // cropRect.left/top are stored relative to image's top-left
+  const x = cropRect.left * scaleX;
+  const y = cropRect.top * scaleY;
+  const w = cropRect.width * scaleX;
+  const h = cropRect.height * scaleY;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(image, x, y, w, h, 0, 0, w, h);
+      image.src = canvas.toDataURL();
+      canvas.toBlob(blob => {
+        currentProcessedBlob = blob;
+        const downloadLink = document.getElementById('downloadLink');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.style.display = 'block';
+      });
+  hideCropOverlay();
+  const cropSection = document.getElementById('cropControlsSection');
+  if (cropSection) cropSection.style.display = 'none';
+  cropActive = false;
+  highlightTool(null);
+  showNotification('Image cropped!', 'success');
+    }
+
+    function cancelCrop() {
+      hideCropOverlay();
+      const cropSection = document.getElementById('cropControlsSection');
+      if (cropSection) cropSection.style.display = 'none';
+      cropActive = false;
+      highlightTool(null);
+      showNotification('Crop cancelled', 'info');
+    }
+    
+    // Function to reset to original image
+    function resetToOriginal() {
+      if (!originalImageBlob) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const image = document.getElementById('resultImage');
+        image.src = e.target.result;
+        
+        // Reset all state variables
+        currentBgRemovedBlob = null;
+        currentProcessedBlob = null;
+        currentColoredBlob = null;
+        isEnhanced = false;
+        hasColorBackground = false;
+
+        // Update UI
+        document.getElementById('enhanceText').textContent = 'Enhance Photo';
+        document.getElementById('downloadLink').href = e.target.result;
+
+        showNotification('Reset to original image', 'info');
+      };
+      reader.readAsDataURL(originalImageBlob);
+    }
+
+    // Function to toggle blur controls visibility
+    function toggleBlurControls() {
+      const blurControls = document.getElementById('blurControlsSection');
+      const isVisible = blurControls.style.display === 'block';
+      
+      // Hide color picker when showing blur controls
+      hideColorPicker();
+      
+      // Toggle blur controls
+      blurControls.style.display = isVisible ? 'none' : 'block';
+
+      // Store original image data when showing controls
+      if (!isVisible && !originalImageData) {
+        const image = document.getElementById('resultImage');
+        if (image.src) {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = image.naturalWidth;
+          canvas.height = image.naturalHeight;
+          ctx.drawImage(image, 0, 0);
+          originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      // Highlight the blur tool
+      highlightTool(isVisible ? null : 'blurTool');
+    }
+
+    // Function to apply blur effect in real-time
+    function applyRealTimeBlur(intensity) {
+      const image = document.getElementById('resultImage');
+      if (!image.src) {
+        showNotification('Please upload an image first', 'error');
+        return;
+      }
+
+      // Show loader
+      document.getElementById('loader').style.display = 'flex';
+
+      // Use RequestAnimationFrame for smooth updates
+      requestAnimationFrame(() => {
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+
+        // If we have original data, use it to prevent quality loss
+        if (originalImageData) {
+          ctx.putImageData(originalImageData, 0, 0);
+        } else {
+          // Draw original image if we don't have cached data
+          ctx.drawImage(image, 0, 0);
+        }
+
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imageData.data;
+
+        // Apply blur effect
+        boxBlur(pixels, canvas.width, canvas.height, intensity);
+
+        // Put processed image data back
+        ctx.putImageData(imageData, 0, 0);
+
+        // Update the image source
+        image.src = canvas.toDataURL();
+
+        // Store the processed image for download
+        canvas.toBlob((blob) => {
+          currentProcessedBlob = blob;
+          const downloadLink = document.getElementById('downloadLink');
+          downloadLink.href = URL.createObjectURL(blob);
+          downloadLink.style.display = 'block';
+        });
+
+        // Hide loader
+        document.getElementById('loader').style.display = 'none';
+
+        // Show reset button
+        document.getElementById('resetOriginalTool').style.display = 'flex';
+      });
+    }
+
+    // Add event listener for real-time blur updates
+    document.getElementById('blurRange').addEventListener('input', (e) => {
+      const intensity = parseInt(e.target.value);
+      document.getElementById('blurValue').textContent = intensity + 'px';
+
+      // Debounce the blur effect for better performance
+      clearTimeout(blurDebounceTimer);
+      blurDebounceTimer = setTimeout(() => {
+        applyRealTimeBlur(intensity);
+      }, 50); // 50ms delay for smooth performance
+    });
+
+    // Function to update blur value display
+    function updateBlurValue() {
+      const slider = document.getElementById('blurRange');
+      const valueDisplay = document.getElementById('blurValue');
+      valueDisplay.textContent = slider.value + 'px';
+    }
+
+    // Add event listener to update blur value display when slider changes
+    document.getElementById('blurRange').addEventListener('input', updateBlurValue);
+
+    function applyBlurEffect() {
+      const image = document.getElementById('resultImage');
+      if (!image.src) {
+        showNotification('Please upload an image first', 'error');
+        return;
+      }
+
+      // Get blur intensity from slider
+      const blurIntensity = parseInt(document.getElementById('blurRange').value);
+
+      // Show loader
+      document.getElementById('loader').style.display = 'flex';
+      
+      // Create temporary image to get natural dimensions
+      const tempImage = new Image();
+      tempImage.src = image.src;
+      tempImage.onload = function() {
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size to match image
+        canvas.width = tempImage.naturalWidth;
+        canvas.height = tempImage.naturalHeight;
+
+        // Draw original image to canvas
+        ctx.drawImage(tempImage, 0, 0);
+
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imageData.data;
+
+        // Apply blur effect with intensity from slider
+        boxBlur(pixels, canvas.width, canvas.height, blurIntensity);
+
+        // Put processed image data back
+        ctx.putImageData(imageData, 0, 0);
+
+        // Update the image source
+        image.src = canvas.toDataURL();
+        
+        // Store the processed image for download
+        canvas.toBlob((blob) => {
+          currentProcessedBlob = blob;
+          const downloadLink = document.getElementById('downloadLink');
+          downloadLink.href = URL.createObjectURL(blob);
+          downloadLink.style.display = 'block';
+        });
+
+        // Hide loader
+        document.getElementById('loader').style.display = 'none';
+        
+        // Show reset button
+        document.getElementById('resetOriginalTool').style.display = 'flex';
+        
+        showNotification('Blur effect applied successfully', 'success');
+      };
+    }
+
+    // Box blur algorithm
+    function boxBlur(pixels, width, height, radius) {
+      const tmpPix = new Uint8ClampedArray(pixels.length);
+      // Horizontal blur
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          let r = 0, g = 0, b = 0, a = 0;
+          let count = 0;
+          
+          // Box blur kernel
+          for (let i = -radius; i <= radius; i++) {
+            const px = x + i;
+            if (px >= 0 && px < width) {
+              const idx = (y * width + px) * 4;
+              r += pixels[idx];
+              g += pixels[idx + 1];
+              b += pixels[idx + 2];
+              a += pixels[idx + 3];
+              count++;
+            }
+          }
+          
+          // Average values
+          const outIdx = (y * width + x) * 4;
+          tmpPix[outIdx] = r / count;
+          tmpPix[outIdx + 1] = g / count;
+          tmpPix[outIdx + 2] = b / count;
+          tmpPix[outIdx + 3] = a / count;
+        }
+      }
+      
+      // Vertical blur
+      for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
+          let r = 0, g = 0, b = 0, a = 0;
+          let count = 0;
+          
+          // Box blur kernel
+          for (let i = -radius; i <= radius; i++) {
+            const py = y + i;
+            if (py >= 0 && py < height) {
+              const idx = (py * width + x) * 4;
+              r += tmpPix[idx];
+              g += tmpPix[idx + 1];
+              b += tmpPix[idx + 2];
+              a += tmpPix[idx + 3];
+              count++;
+            }
+          }
+          
+          // Average values
+          const outIdx = (y * width + x) * 4;
+          pixels[outIdx] = r / count;
+          pixels[outIdx + 1] = g / count;
+          pixels[outIdx + 2] = b / count;
+          pixels[outIdx + 3] = a / count;
+        }
+      }
+    }
+    
+    // Show color picker in sidebar
+    function showColorPicker() {
+      highlightTool('colorBgTool');
+      document.getElementById('colorPickerSection').style.display = 'block';
+    }
+    
+    function hideColorPicker() {
+      document.getElementById('colorPickerSection').style.display = 'none';
+    }
+    
+    // Function to upload a new image (reset everything and start fresh)
+    function uploadNewImage() {
+      // Reset all state variables
+      originalImageBlob = null;
+      currentBgRemovedBlob = null;
+      currentProcessedBlob = null;
+      currentColoredBlob = null;
+      isEnhanced = false;
+      hasColorBackground = false;
+      isImageUploaded = false;
+      
+      // Reset UI elements
+      const resultImage = document.getElementById('resultImage');
+      const uploadPrompt = document.getElementById('uploadPrompt');
+      const downloadLink = document.getElementById('downloadLink');
+      const uploadNewImageBtn = document.getElementById('uploadNewImageBtn');
+      const resetOriginalTool = document.getElementById('resetOriginalTool');
+      const enhanceText = document.getElementById('enhanceText');
+      
+      // Hide processed image and show upload prompt
+      resultImage.src = '';
+      uploadPrompt.style.display = 'flex';
+      downloadLink.style.display = 'none';
+      uploadNewImageBtn.style.display = 'none';
+      resetOriginalTool.style.display = 'none';
+      
+      // Reset enhancement button text
+      enhanceText.textContent = 'Enhance Photo';
+      
+      // Hide color picker
+      hideColorPicker();
+      
+      // Clear any highlighted tools
+      highlightTool(null);
+      
+      // Trigger file input
+      triggerFileInput();
+      
+      showNotification('Ready to upload new image!', 'info');
+    }
+    
+    // Handle image upload and display
+    function handleImageUpload(file) {
+      if (!file) return;
+      
+      // Store original image blob for reset functionality
+      originalImageBlob = file;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('resultImage').src = e.target.result;
+        document.getElementById('uploadPrompt').style.display = 'none';
+        isImageUploaded = true;
+        
+        // Add image-loaded class to upload area
+        document.getElementById('upload-area').classList.add('image-loaded');
+        
+        // Show reset to original button
+        document.getElementById('resetOriginalTool').style.display = 'flex';
+        
+        // Show upload new image button
+        document.getElementById('uploadNewImageBtn').style.display = 'block';
+
+        // Enable the download button
+        const downloadLink = document.getElementById('downloadLink');
+        downloadLink.href = e.target.result;
+        downloadLink.style.display = 'block';
+        
+        showNotification(`Image "${file.name}" uploaded successfully!`, 'info');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Process image upload
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+      if (e.target.files && e.target.files[0]) {
+        handleImageUpload(e.target.files[0]);
+      }
+    });
+    
+    // Function to trigger file input when clicking on upload button
+    function triggerFileInput() {
+      document.getElementById('imageInput').click();
+    }
+    
+    // Remove background function
+    function removeBackground() {
+      const loader = document.getElementById('loader');
+      const resultImage = document.getElementById('resultImage');
+      const downloadLink = document.getElementById('downloadLink');
+      
+      highlightTool('bgRemoveTool');
+      hideColorPicker(); // Hide color picker when using other tools
+
+      if (!isImageUploaded || !originalImageBlob) {
+        showNotification("Please select an image first.", "error");
+        return;
+      }
+
+      loader.style.display = 'flex';
+      resultImage.src = '';
+      downloadLink.style.display = 'none';
+
+      // Use the original image blob for background removal
+      processBgRemoval(originalImageBlob);
+      
+      function processBgRemoval(imageFile) {
+        const bgFormData = new FormData();
+        bgFormData.append('image', imageFile);
+        
+        fetch('http://localhost:5000/remove-bg', {
+          method: 'POST',
+          body: bgFormData
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.blob();
+        })
+        .then(blob => {
+          // Store the processed image
+          currentBgRemovedBlob = blob;
+          
+          // Create object URL for display and download
+          const objectURL = URL.createObjectURL(blob);
+          resultImage.src = objectURL;
+          downloadLink.href = objectURL;
+          downloadLink.style.display = 'block';
+          
+          // Update UI
+          loader.style.display = 'none';
+          document.getElementById('resetOriginalTool').style.display = 'flex';
+          
+          showNotification('Background removed successfully!', 'success');
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          loader.style.display = 'none';
+          showNotification('Failed to remove background. Please try again.', 'error');
+          
+          // Reset to original image on error
+          if (originalImageBlob) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              resultImage.src = e.target.result;
+            };
+            reader.readAsDataURL(originalImageBlob);
+          }
+        });
+
+        fetch('http://localhost:5000/remove-bg', {
+          method: 'POST',
+          body: bgFormData
+        })
+        .then(response => {
+          console.log('Response status:', response.status);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.blob();
+        })
+        .then(blob => {
+          console.log('Background removal successful, blob size:', blob.size);
+          const url = URL.createObjectURL(blob);
+          loader.style.display = 'none';
+          resultImage.src = url;
+          downloadLink.href = url;
+          downloadLink.style.display = 'block';
+          
+          // Tools are already visible, just store the data
+          // Store the background removed image blob
+          currentBgRemovedBlob = blob;
+          currentProcessedBlob = blob;
+          isEnhanced = false;
+          hasColorBackground = false;
+          
+          // Show success notification
+          showNotification('Background removed successfully!', 'success');
+        })
+        .catch(error => {
+          console.error('Background removal failed:', error);
+          loader.style.display = 'none';
+          showNotification('Failed to remove background: ' + error.message, 'error');
+        });
+      }
+    }
+
+    function addColorBackground() {
+      if (!currentProcessedBlob) {
+        showNotification("Please remove the background first.", "error");
+        return;
+      }
+
+      highlightTool('colorBgTool');
+      
+      const loader = document.getElementById('loader');
+      const resultImage = document.getElementById('resultImage');
+      const downloadLink = document.getElementById('downloadLink');
+      const colorPicker = document.getElementById('bgColorPicker');
+      const selectedColor = colorPicker.value;
+
+      loader.style.display = 'flex';
+
+      const formData = new FormData();
+      formData.append('image', currentProcessedBlob, 'processed-image.png');
+      formData.append('color', selectedColor);
+
+      fetch('http://localhost:5000/add-color-background', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        loader.style.display = 'none';
+        resultImage.src = url;
+        downloadLink.href = url;
+        downloadLink.style.display = 'block';
+        
+        // Store the colored background version
+        currentColoredBlob = blob;
+        hasColorBackground = true;
+        
+        // Show success notification
+        showNotification('Background color applied!', 'success');
+      })
+      .catch(() => {
+        loader.style.display = 'none';
+        showNotification('Failed to apply background color', 'error');
+      });
+    }
+
+    function enhanceBgRemovedImage() {
+      // Check if we have any image to enhance (original or background-removed)
+      const imageToEnhance = currentBgRemovedBlob || originalImageBlob;
+      
+      if (!imageToEnhance) {
+        showNotification("Please upload an image first.", "error");
+        return;
+      }
+
+      highlightTool('enhanceTool');
+      hideColorPicker(); // Hide color picker when using other tools
+      
+      const loader = document.getElementById('loader');
+      const resultImage = document.getElementById('resultImage');
+      const downloadLink = document.getElementById('downloadLink');
+
+      loader.style.display = 'flex';
+
+      const formData = new FormData();
+      formData.append('image', imageToEnhance, 'image-to-enhance.png');
+
+      // Use different endpoint based on image type
+      const endpoint = currentBgRemovedBlob ? 'enhance-bg-removed' : 'enhance-only';
+      
+      fetch(`http://localhost:5000/${endpoint}`, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          // If enhance-only endpoint doesn't exist, try enhance-bg-removed as fallback
+          if (endpoint === 'enhance-only') {
+            return fetch('http://localhost:5000/enhance-bg-removed', {
+              method: 'POST',
+              body: formData
+            });
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response;
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        loader.style.display = 'none';
+        resultImage.src = url;
+        downloadLink.href = url;
+        downloadLink.style.display = 'block';
+        
+        // Store the enhanced image blob
+        currentProcessedBlob = blob;
+        isEnhanced = true;
+        
+        // Update button text to "Reset Enhancement"
+        document.getElementById('enhanceText').textContent = 'Reset Enhancement';
+        
+        // Show success notification
+        showNotification('Image enhanced successfully!', 'success');
+        
+        // If there was a colored background, apply it to the enhanced image
+        if (hasColorBackground) {
+          applyColorToEnhanced(blob);
+        }
+      })
+      .catch((error) => {
+        loader.style.display = 'none';
+        console.error('Enhancement error:', error);
+        showNotification('Failed to enhance image. Please try again or check if the server is running.', 'error');
+      });
+    }
+
+    function applyColorToEnhanced(enhancedBlob) {
+      const loader = document.getElementById('loader');
+      const resultImage = document.getElementById('resultImage');
+      const downloadLink = document.getElementById('downloadLink');
+      const colorPicker = document.getElementById('bgColorPicker');
+      const selectedColor = colorPicker.value;
+
+      loader.style.display = 'flex';
+
+      const formData = new FormData();
+      formData.append('image', enhancedBlob, 'enhanced-bg-removed.png');
+      formData.append('color', selectedColor);
+
+      fetch('http://localhost:5000/add-color-background', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        loader.style.display = 'none';
+        resultImage.src = url;
+        downloadLink.href = url;
+        downloadLink.style.display = 'block';
+        
+        // Show success notification
+        showNotification('Color applied to enhanced image!', 'success');
+        
+        // Store the colored enhanced image
+        currentColoredBlob = blob;
+        currentProcessedBlob = enhancedBlob;
+        hasColorBackground = true;
+      })
+      .catch(() => {
+        loader.style.display = 'none';
+        alert("Something went wrong. Please try again.");
+      });
+    }
+
+    function removeEnhancement() {
+      // Check if we have any image to reset to (background-removed or original)
+      const imageToResetTo = currentBgRemovedBlob || originalImageBlob;
+      
+      if (!imageToResetTo) {
+        showNotification("No image to reset to.", "error");
+        return;
+      }
+
+      highlightTool('enhanceTool');
+      
+      const resultImage = document.getElementById('resultImage');
+      const downloadLink = document.getElementById('downloadLink');
+
+      // Reset to the appropriate image (bg-removed if available, otherwise original)
+      currentProcessedBlob = imageToResetTo;
+      isEnhanced = false;
+      
+      // Update button text back to "Enhance Photo"
+      document.getElementById('enhanceText').textContent = 'Enhance Photo';
+      
+      // If there's a color background, apply it to the reset image
+      if (hasColorBackground && currentBgRemovedBlob) {
+        applyColorToOriginal();
+      } else {
+        const url = URL.createObjectURL(imageToResetTo);
+        resultImage.src = url;
+        downloadLink.href = url;
+        showNotification("Enhancement removed", "info");
+      }
+    }
+
+    function applyColorToOriginal() {
+      const loader = document.getElementById('loader');
+      const resultImage = document.getElementById('resultImage');
+      const downloadLink = document.getElementById('downloadLink');
+      const colorPicker = document.getElementById('bgColorPicker');
+      const selectedColor = colorPicker.value;
+
+      loader.style.display = 'flex';
+
+      const formData = new FormData();
+      formData.append('image', currentBgRemovedBlob, 'bg-removed.png');
+      formData.append('color', selectedColor);
+
+      fetch('http://localhost:5000/add-color-background', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        loader.style.display = 'none';
+        resultImage.src = url;
+        downloadLink.href = url;
+        downloadLink.style.display = 'block';
+        
+        // Update the current processed and colored blob
+        currentColoredBlob = blob;
+      })
+      .catch(() => {
+        loader.style.display = 'none';
+        alert("Something went wrong. Please try again.");
+      });
+    }
+
+    function applyColorToEnhanced(enhancedBlob) {
+      const loader = document.getElementById('loader');
+      const resultImage = document.getElementById('resultImage');
+      const downloadLink = document.getElementById('downloadLink');
+      const colorPicker = document.getElementById('bgColorPicker');
+      const selectedColor = colorPicker.value;
+
+      loader.style.display = 'flex';
+
+      const formData = new FormData();
+      formData.append('image', enhancedBlob, 'enhanced-bg-removed.png');
+      formData.append('color', selectedColor);
+
+      fetch('http://localhost:5000/add-color-background', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        loader.style.display = 'none';
+        resultImage.src = url;
+        downloadLink.href = url;
+        downloadLink.style.display = 'block';
+        
+        // Store the colored enhanced image
+        currentColoredBlob = blob;
+      })
+      .catch(() => {
+        loader.style.display = 'none';
+        alert("Something went wrong. Please try again.");
+      });
+    }
+
+    // Toggle enhancement function
+    function toggleEnhancement() {
+      if (isEnhanced) {
+        removeEnhancement();
+      } else {
+        enhanceBgRemovedImage();
+      }
+    }
+
+    // Update color preview when color picker changes
+    function updateColorPreview() {
+      const colorPicker = document.getElementById('bgColorPicker');
+      const colorPreview = document.getElementById('colorPreview');
+      if (colorPreview) {
+        colorPreview.style.backgroundColor = colorPicker.value;
+      }
+    }
+
+    // Reset to original uploaded image
+    function resetToOriginal() {
+      if (!originalImageBlob) {
+        showNotification("No original image to reset to.", "error");
+        return;
+      }
+
+      highlightTool('resetOriginalTool');
+      hideColorPicker(); // Hide color picker when using other tools
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const resultImage = document.getElementById('resultImage');
+        const downloadLink = document.getElementById('downloadLink');
+        
+        resultImage.src = e.target.result;
+        downloadLink.style.display = 'none';
+        
+        // Reset all state variables
+        currentBgRemovedBlob = null;
+        currentProcessedBlob = null;
+        currentColoredBlob = null;
+        isEnhanced = false;
+        hasColorBackground = false;
+        
+        // Update UI
+        document.getElementById('enhanceText').textContent = 'Enhance Photo';
+        document.getElementById('colorPickerSection').style.display = 'none';
+        
+        showNotification('Image reset to original!', 'success');
+      };
+      reader.readAsDataURL(originalImageBlob);
+    }
+
+    // Initialize the UI and set up drag and drop
+    document.addEventListener('DOMContentLoaded', function() {
+      // Handle drag and drop uploads
+      const uploadArea = document.getElementById('upload-area');
+      const uploadPrompt = document.getElementById('uploadPrompt');
+      
+      // Remove click handler from upload area - only button should trigger upload
+      // uploadArea.addEventListener('click', function(e) {
+      //   if (!isImageUploaded) {
+      //     triggerFileInput(e);
+      //   }
+      // });
+      
+      // Create a notification element for drag events
+      const notification = document.createElement('div');
+      notification.className = 'drag-notification';
+      notification.textContent = 'Drop to Upload';
+      document.body.appendChild(notification);
+      
+      // Drag events for the entire document
+      document.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+        if (!isImageUploaded) {
+          uploadArea.classList.add('drag-over');
+          uploadPrompt.classList.add('drag-active');
+          notification.classList.add('show');
+        }
+      });
+      
+      document.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        if (!isImageUploaded) {
+          uploadArea.classList.add('drag-over');
+          uploadPrompt.classList.add('drag-active');
+        }
+      });
+      
+      document.addEventListener('dragleave', function(e) {
+        if (!isImageUploaded && e.relatedTarget === null || e.relatedTarget === document.documentElement) {
+          uploadArea.classList.remove('drag-over');
+          uploadPrompt.classList.remove('drag-active');
+          notification.classList.remove('show');
+        }
+      });
+      
+      // Specific upload area drag events
+      uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        if (!isImageUploaded) {
+          uploadArea.classList.add('drag-over');
+        }
+      });
+      
+      uploadArea.addEventListener('dragleave', function() {
+        if (!isImageUploaded) {
+          uploadArea.classList.remove('drag-over');
+        }
+      });
+      
+      uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        uploadPrompt.classList.remove('drag-active');
+        notification.classList.remove('show');
+        
+        // Only proceed with upload if no image is loaded or upload prompt is visible
+        if (!isImageUploaded && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          // Get file and validate that it's an image
+          const file = e.dataTransfer.files[0];
+          if (!file.type.match('image.*')) {
+            showNotification('Please upload an image file (JPEG, PNG, etc.)', 'error');
+            return;
+          }
+          
+          // Update the file input and handle the upload
+          const imageInput = document.getElementById('imageInput');
+          
+          // Create a DataTransfer object to set the files property
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          imageInput.files = dataTransfer.files;
+          
+          handleImageUpload(file);
+        }
+      });
+      
+      // File input change event
+      document.getElementById('imageInput').addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+          handleImageUpload(e.target.files[0]);
+        }
+      });
+      
+      // Initialize color picker
+      const colorPicker = document.getElementById('bgColorPicker');
+      const colorPreview = document.getElementById('colorPreview');
+      
+      if (colorPicker && colorPreview) {
+        // Set initial color preview
+        colorPreview.style.backgroundColor = colorPicker.value;
+        
+        // Update color preview when color changes
+        colorPicker.addEventListener('input', updateColorPreview);
+        colorPicker.addEventListener('change', updateColorPreview);
+      }
+    });
+  </script>
+
+  <!-- Auth Overlay -->
+  <div class="auth-overlay" id="authOverlay">
+    <!-- Login Popup -->
+    <div class="auth-popup" id="loginPopup" style="display: none;">
+      <button class="close-auth"><i class="fas fa-times"></i></button>
+      <h2>Welcome Back!</h2>
+      <form class="auth-form">
+        <div class="form-group">
+          <input type="email" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+          <input type="password" placeholder="Password" required>
+          <div class="password-strength">
+            <div class="strength-bar"></div>
+          </div>
+        </div>
+        <button type="submit" class="auth-btn">
+          Login
+          <div class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </button>
+        <div class="social-login">
+          <p>Or login with</p>
+          <div class="social-buttons">
+            <button type="button" class="social-btn"><i class="fab fa-google"></i></button>
+            <button type="button" class="social-btn"><i class="fab fa-facebook-f"></i></button>
+            <button type="button" class="social-btn"><i class="fab fa-twitter"></i></button>
+          </div>
+        </div>
+        <div class="auth-footer">
+          Don't have an account? <a href="#" onclick="showSignup()">Sign Up</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Signup Popup -->
+    <div class="auth-popup" id="signupPopup" style="display: none;">
+      <button class="close-auth"><i class="fas fa-times"></i></button>
+      <h2>Create Account</h2>
+      <form class="auth-form">
+        <div class="form-group">
+          <input type="email" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+          <input type="password" placeholder="Password" required>
+          <div class="password-strength">
+            <div class="strength-bar"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <input type="password" placeholder="Confirm Password" required>
+        </div>
+        <button type="submit" class="auth-btn">
+          Sign Up
+          <div class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </button>
+        <div class="social-login">
+          <p>Or sign up with</p>
+          <div class="social-buttons">
+            <button type="button" class="social-btn"><i class="fab fa-google"></i></button>
+            <button type="button" class="social-btn"><i class="fab fa-facebook-f"></i></button>
+            <button type="button" class="social-btn"><i class="fab fa-twitter"></i></button>
+          </div>
+        </div>
+        <div class="auth-footer">
+          Already have an account? <a href="#" onclick="showLogin()">Login</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>

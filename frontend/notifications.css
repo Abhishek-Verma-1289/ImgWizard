@@ -1,0 +1,56 @@
+/* Notification styles for user feedback */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  background: var(--secondary-gradient);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 109, 170, 0.3);
+  z-index: 1000;
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification.success {
+  background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.notification.error {
+  background: linear-gradient(135deg, #EF4444, #B91C1C);
+}
+
+.notification.info {
+  background: var(--secondary-gradient);
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification i {
+  font-size: 1.2rem;
+}
+
+/* Animation for the notification */
+@keyframes slideIn {
+  from { transform: translateX(120%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(120%); }
+}
+
+.notification.slide-in {
+  animation: slideIn 0.3s forwards;
+}
+
+.notification.slide-out {
+  animation: slideOut 0.3s forwards;
+}
