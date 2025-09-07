@@ -11,6 +11,10 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/')
+def home():
+    return 'ImgWizard API is running! Available endpoints: /remove-bg, /enhance-bg-removed'
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
