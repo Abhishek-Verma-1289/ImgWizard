@@ -82,15 +82,24 @@ def enhance_image(pil_image):
 
 @app.route('/remove-bg', methods=['POST'])
 def remove_bg():
-    if 'image' not in request.files:
-        return 'No image uploaded', 400
+    try:
+        if 'image' not in request.files:
+            app.logger.error('No image file in request')
+            return 'No image uploaded', 400
 
-    file = request.files['image']
-    input_data = file.read()
-
-    output_data = remove(input_data)
-
-    return send_file(io.BytesIO(output_data), mimetype='image/png', as_attachment=False, download_name='no-bg.png')
+        file = request.files['image']
+        app.logger.info(f'Processing image: {file.filename}')
+        
+        input_data = file.read()
+        app.logger.info('Image read successfully')
+        
+        output_data = remove(input_data)
+        app.logger.info('Background removal completed')
+        
+        return send_file(io.BytesIO(output_data), mimetype='image/png', as_attachment=False, download_name='no-bg.png')
+    except Exception as e:
+        app.logger.error(f'Error in background removal: {str(e)}')
+        return f'Error processing image: {str(e)}', 500
 
 @app.route('/remove-and-upscale', methods=['POST'])
 def remove_and_upscale():
